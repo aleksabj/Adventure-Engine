@@ -1,0 +1,35 @@
+location gate
+  description You are outside the gates of a ruined castle.
+  item gate-key
+
+location hall
+  description A grand hall with a dusty floor.
+  item bottle
+
+location vault
+  description A cold treasure vault.
+  item chest
+
+item gate-key
+  portable
+
+item bottle
+  can_open
+  state closed
+  contains gem
+
+item gem
+  portable
+
+item chest
+  can_open
+  state closed
+
+connection gate inside -> hall
+connection hall east -> vault
+
+start gate
+
+goal
+  location vault
+  has gem

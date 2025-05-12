@@ -1,0 +1,35 @@
+location foyer
+  description A small foyer with a locked front door.
+  item chest
+
+location living-room
+  description A cozy living room with a rug.
+  item rug
+  item trapdoor
+
+location cellar
+  description A dusty underground room.
+
+item chest
+  can_open
+  state closed
+  contains key
+
+item key
+  portable
+
+item rug
+  movable reveals trapdoor
+
+item trapdoor
+  hidden
+  can_open
+  leads_to cellar
+
+connection foyer north -> living-room
+
+start foyer
+
+goal
+  location cellar
+  has key
