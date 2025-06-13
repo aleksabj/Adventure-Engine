@@ -1,6 +1,9 @@
 module Main where
 
 import Parser
+import GameWorld
+import GameLoop
+
 main :: IO ()
 main = do
   -- contents <- readFile "examples/library-secrets.txt"
