@@ -3,6 +3,7 @@ module Main where
 import Parser
 import GameWorld
 import GameLoop
+import Engine
 
 main :: IO ()
 main = do
@@ -11,5 +12,7 @@ main = do
   contents <- readFile "examples/intro-escape.txt"
   case parseGameFile contents of
     Left err -> print err
-    Right world -> print world
-
+    Right gw -> do
+      let startLoc = cfgStart (config gw)
+          initialState = GameState startLoc [] gw
+      startGame initialState

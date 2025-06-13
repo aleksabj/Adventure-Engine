@@ -1,23 +1,26 @@
 module GameLoop (startGame) where
 
 import System.IO (hFlush, stdout)
+import Engine
+import GameWorld
 
 -- Starts the interactive game loop
-startGame :: IO ()
-startGame = do
+startGame :: GameState -> IO ()
+startGame state = do
     putStrLn "----------------------"
     putStrLn "Welcome to the Adventure Game!"
     putStrLn "Type 'look' to observe your surroundings."
     putStrLn "Type 'inventory' to check your items."
     putStrLn "Type 'help' at any time to see this message again."
     putStrLn "----------------------"
-    loop
+    loop state
 
 -- REPL loop: prompt → command → response → repeat
-loop :: IO ()
-loop = do
+loop :: GameState -> IO ()
+loop state = do
     putStr "\n> "
     hFlush stdout
     input <- getLine
-    putStrLn $ "You entered: " ++ input
-    loop
+    let (msg, newState) = processCommand input state
+    putStrLn msg
+    loop newState
