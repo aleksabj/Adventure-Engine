@@ -2,7 +2,7 @@ module Engine where
 
 import GameWorld
 import Data.Maybe (fromMaybe)
-import Data.List (find)
+import Data.List (find, delete)
 
 data GameState = GameState
   { currentLoc :: Name
@@ -17,6 +17,8 @@ processCommand input state =
         ["look"]      -> (describeCurrentLocation state, state)
         ["inventory"] -> (showInventory state, state)
         ["go", dir]   -> movePlayer dir state
+        ["take", item]  -> takeItem item state
+        ["open", item]  -> openItem item state
         _             -> ("I don't understand that command.", state)
 
 -- Describe the current location, items, and exits
@@ -50,6 +52,64 @@ movePlayer dir gs =
             ("You move " ++ dir ++ " to " ++ connTo conn ++ ".", gs { currentLoc = connTo conn })
         Nothing ->
             ("You can't go " ++ dir ++ " from here.", gs)
+
+-- Take an item if it's present and portable
+takeItem :: Name -> GameState -> (String, GameState)
+takeItem item gs =
+    let loc = getLocationByName (currentLoc gs) (world gs)
+        allItems = items (world gs)
+        isHere = item `elem` locItems loc
+        mItem = findItem item allItems
+    in case (isHere, mItem) of
+        (True, Just it) | Portable `elem` itemBehaviors it ->
+            let newLoc = loc { locItems = delete item (locItems loc) }
+                newWorld = gsWorldUpdate gs newLoc
+            in ("You take the " ++ item ++ ".", gs { inventory = item : inventory gs, world = newWorld })
+        (True, _) -> ("You can't take that.", gs)
+        _ -> ("There is no " ++ item ++ " here.", gs)
+
+-- Open an item if it can be opened
+openItem :: Name -> GameState -> (String, GameState)
+openItem name gs =
+    let mItem = findItem name (items (world gs))
+    in case mItem of
+        Just it ->
+            case [ (isOpen, contents) | CanOpen isOpen contents <- itemBehaviors it ] of
+                [(False, contents)] ->
+                    let updatedItem = it { itemBehaviors = replaceBehavior (CanOpen False contents) (CanOpen True contents) (itemBehaviors it) }
+                        newItems     = updateItem updatedItem (items (world gs))
+                        updatedLocs  = addItemsToLocation contents (currentLoc gs) (locations (world gs))
+                        msg          = if null contents
+                                       then "You open the " ++ name ++ "."
+                                       else "You open the " ++ name ++ " and find: " ++ unwords contents ++ "."
+                    in (msg, gs { world = (world gs) { items = newItems, locations = updatedLocs } })
+                [(True, _)] ->
+                    ("It's already open.", gs)
+                _ ->
+                    ("You can't open that.", gs)
+        Nothing -> ("No such item.", gs)
+
+-- Utility functions
+findItem :: Name -> [Item] -> Maybe Item
+findItem name = lookup name . map (\i -> (itemName i, i))
+
+updateItem :: Item -> [Item] -> [Item]
+updateItem newItem = map (\i -> if itemName i == itemName newItem then newItem else i)
+
+replaceBehavior :: ItemBehavior -> ItemBehavior -> [ItemBehavior] -> [ItemBehavior]
+replaceBehavior old new = map (\b -> if b == old then new else b)
+
+addItemsToLocation :: [Name] -> Name -> [Location] -> [Location]
+addItemsToLocation names targetName =
+    map (\loc -> if locName loc == targetName
+                then loc { locItems = locItems loc ++ names }
+                else loc)
+
+gsWorldUpdate :: GameState -> Location -> GameWorld
+gsWorldUpdate gs newLoc =
+    let oldWorld = world gs
+        updatedLocs = map (\loc -> if locName loc == locName newLoc then newLoc else loc) (locations oldWorld)
+    in oldWorld { locations = updatedLocs }
 
 -- Utility: get a location by name or crash
 getLocationByName :: Name -> GameWorld -> Location
