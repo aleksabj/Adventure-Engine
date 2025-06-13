@@ -28,4 +28,7 @@ loop state = do
     input <- getLine
     let (msg, newState) = processCommand input state
     putStrLn msg
-    loop newState
+    case checkGoal newState of
+        Just winMsg -> putStrLn winMsg >> return ()
+        Nothing     -> loop newState
+

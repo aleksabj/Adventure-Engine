@@ -128,3 +128,10 @@ helpMessage = unlines
     , "- open [item]"
     , "- help"
     ]
+
+checkGoal :: GameState -> Maybe String
+checkGoal gs =
+    let GameConfig _ goalLoc goalItems = config (world gs)
+    in if currentLoc gs == goalLoc && all (`elem` inventory gs) goalItems
+        then Just "*** Congratulations! You completed the quest! ***"
+        else Nothing
