@@ -14,12 +14,13 @@ data GameState = GameState
 processCommand :: String -> GameState -> (String, GameState)
 processCommand input state =
     case words input of
-        ["look"]      -> (describeCurrentLocation state, state)
-        ["inventory"] -> (showInventory state, state)
-        ["go", dir]   -> movePlayer dir state
+        ["look"]        -> (describeCurrentLocation state, state)
+        ["inventory"]   -> (showInventory state, state)
+        ["go", dir]     -> movePlayer dir state
         ["take", item]  -> takeItem item state
         ["open", item]  -> openItem item state
-        _             -> ("I don't understand that command.", state)
+        ["help"]        -> (helpMessage, state)
+        _               -> ("I don't understand that command.", state)
 
 -- Describe the current location, items, and exits
 describeCurrentLocation :: GameState -> String
@@ -116,3 +117,14 @@ getLocationByName :: Name -> GameWorld -> Location
 getLocationByName name gw =
     fromMaybe (error $ "Unknown location: " ++ name)
               (lookup name [(locName l, l) | l <- locations gw])
+
+helpMessage :: String
+helpMessage = unlines
+    [ "Available commands:"
+    , "- look"
+    , "- inventory"
+    , "- go [direction]"
+    , "- take [item]"
+    , "- open [item]"
+    , "- help"
+    ]
