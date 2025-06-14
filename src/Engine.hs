@@ -50,12 +50,18 @@ movePlayer :: String -> GameState -> (String, GameState)
 movePlayer dir gs =
     let from = currentLoc gs
         conns = connections (world gs)
+        available = [connDir c | c <- conns, connFrom c == from]
         mConn = find (\c -> connFrom c == from && connDir c == dir) conns
     in case mConn of
-        Just conn -> 
-            ("You move " ++ dir ++ " to " ++ connTo conn ++ ".", gs { currentLoc = connTo conn })
-        Nothing ->
-            ("You can't go " ++ dir ++ " from here.", gs)
+        Just conn -> case connRequired conn of
+            Nothing ->
+                ("You move " ++ dir ++ " to " ++ connTo conn ++ ".", gs { currentLoc = connTo conn })
+            Just item
+                | item `elem` inventory gs ->
+                    ("You unlock the path with the " ++ item ++ " and go " ++ dir ++ " to " ++ connTo conn ++ ".", gs { currentLoc = connTo conn })
+                | otherwise ->
+                    ("You need a " ++ item ++ " to go " ++ dir ++ ".", gs)
+        Nothing -> ("You can't go " ++ dir ++ " from here. Try: " ++ unwords available, gs)
 
 -- Take an item if it's present and portable
 takeItem :: Name -> GameState -> (String, GameState)
