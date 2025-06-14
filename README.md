@@ -4,6 +4,10 @@ This project is a text adventure game engine written in Haskell. It allows defin
 
 The goal was to practice functional programming and build a minimal, working base for classic interactive fiction (like *Zork*).
 
+
+---
+
+
 ### Key Features
 - Parses a game world described in plain `.txt` files.
 - Keeps track of player location, inventory, and item states.
@@ -77,6 +81,8 @@ The goal was to practice functional programming and build a minimal, working bas
     ```
 
 Just type `1` to play Intro Escape.
+
+---
 
 ### Example: how to win Intro Escape
 
