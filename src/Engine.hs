@@ -19,6 +19,8 @@ processCommand input state =
         ["go", dir]     -> movePlayer dir state
         ["take", item]  -> takeItem item state
         ["open", item]  -> openItem item state
+        ["read", item]  -> readItem item state
+        ["move", item]  -> moveItem item state
         ["help"]        -> (helpMessage, state)
         _               -> ("I don't understand that command.", state)
 
@@ -90,7 +92,36 @@ openItem name gs =
                     ("You can't open that.", gs)
         Nothing -> ("No such item.", gs)
 
+readItem :: Name -> GameState -> (String, GameState)
+readItem name gs =
+    case findItem name (items (world gs)) of
+        Just it | Readable `elem` itemBehaviors it ->
+            ("You read the " ++ name ++ ". It's full of old, faded text.", gs)
+        Just _ ->
+            ("You can't read that.", gs)
+        Nothing ->
+            ("No such item.", gs)
+
+moveItem :: Name -> GameState -> (String, GameState)
+moveItem name gs =
+    let mItem = findItem name (items (world gs))
+    in case mItem of
+        Just it -> case [r | Movable r <- itemBehaviors it] of
+            (Just revealed : _) ->
+                let newLocs = revealItemInLocation revealed (currentLoc gs) (locations (world gs))
+                in ("You move the " ++ name ++ " and reveal: " ++ revealed ++ ".", gs { world = (world gs) { locations = newLocs } })
+            _ -> ("You can't move that.", gs)
+        Nothing -> ("No such item.", gs)
+
+
 -- Utility functions
+checkGoal :: GameState -> Maybe String
+checkGoal gs =
+    let GameConfig _ goalLoc goalItems = config (world gs)
+    in if currentLoc gs == goalLoc && all (`elem` inventory gs) goalItems
+        then Just "*** Congratulations! You completed the quest! ***"
+        else Nothing
+
 findItem :: Name -> [Item] -> Maybe Item
 findItem name = lookup name . map (\i -> (itemName i, i))
 
@@ -112,12 +143,18 @@ gsWorldUpdate gs newLoc =
         updatedLocs = map (\loc -> if locName loc == locName newLoc then newLoc else loc) (locations oldWorld)
     in oldWorld { locations = updatedLocs }
 
--- Utility: get a location by name or crash
 getLocationByName :: Name -> GameWorld -> Location
 getLocationByName name gw =
     fromMaybe (error $ "Unknown location: " ++ name)
               (lookup name [(locName l, l) | l <- locations gw])
 
+revealItemInLocation :: Name -> Name -> [Location] -> [Location]
+revealItemInLocation itemName targetName =
+    map (\loc -> if locName loc == targetName
+                then loc { locItems = itemName : locItems loc }
+                else loc)
+
+-- Help message for the player
 helpMessage :: String
 helpMessage = unlines
     [ "Available commands:"
@@ -126,12 +163,7 @@ helpMessage = unlines
     , "- go [direction]"
     , "- take [item]"
     , "- open [item]"
+    , "- read [item]"
+    , "- move [item]"
     , "- help"
     ]
-
-checkGoal :: GameState -> Maybe String
-checkGoal gs =
-    let GameConfig _ goalLoc goalItems = config (world gs)
-    in if currentLoc gs == goalLoc && all (`elem` inventory gs) goalItems
-        then Just "*** Congratulations! You completed the quest! ***"
-        else Nothing
