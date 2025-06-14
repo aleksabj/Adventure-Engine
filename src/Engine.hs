@@ -13,7 +13,8 @@ data GameState = GameState
 -- Process a user command
 processCommand :: String -> GameState -> (String, GameState)
 processCommand input state =
-    case words input of
+    let ws = cleanWords (words input)
+    in case ws of
         ["look"]        -> (describeCurrentLocation state, state)
         ["inventory"]   -> (showInventory state, state)
         ["go", dir]     -> movePlayer dir state
@@ -167,3 +168,6 @@ helpMessage = unlines
     , "- move [item]"
     , "- help"
     ]
+
+cleanWords :: [String] -> [String]
+cleanWords = filter (`notElem` ["the", "a", "an", "to", "on", "at", "in"])
