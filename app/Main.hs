@@ -20,6 +20,7 @@ main = do
         "1" -> "examples/intro-escape.txt"
         "2" -> "examples/library-secrets.txt"
         "3" -> "examples/castle-treasure.txt"
+        _   -> "examples/intro-escape.txt"  -- fallback
   putStrLn $ "Loading: " ++ filePath
   contents <- readFile filePath
 
