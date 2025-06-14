@@ -1,17 +1,27 @@
 location gate
-  description You are outside the gates of a ruined castle.
+  description You are outside the gates of a ruined castle. A large gate blocks the way inside.
   item gate-key
+  item gate-door
 
 location hall
-  description A grand hall with a dusty floor.
+  description A grand hall with a dusty floor and a torn scroll on the ground.
   item bottle
+  item scroll
 
 location vault
-  description A cold treasure vault.
+  description A cold treasure vault with a stone pedestal.
   item chest
 
 item gate-key
   portable
+
+item gate-door
+  can_open
+  state closed
+  leads_to hall
+
+item scroll
+  readable
 
 item bottle
   can_open
@@ -24,8 +34,9 @@ item gem
 item chest
   can_open
   state closed
+  container
 
-connection gate inside -> hall
+connection gate inside -> hall if has(gate-key)
 connection hall east -> vault
 
 start gate

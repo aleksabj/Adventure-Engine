@@ -27,6 +27,7 @@ item trapdoor
   leads_to cellar
 
 connection foyer north -> living-room
+connection living-room down -> cellar if has(key)
 
 start foyer
 
