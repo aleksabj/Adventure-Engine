@@ -7,9 +7,22 @@ import Engine
 
 main :: IO ()
 main = do
-  -- contents <- readFile "examples/library-secrets.txt"
-  -- contents <- readFile "examples/castle-treasure.txt"
-  contents <- readFile "examples/intro-escape.txt"
+  putStrLn "\n"
+  putStrLn "----------------------"
+  putStrLn "Welcome to the Adventure Engine!"
+  putStrLn "Please choose a game to play:"
+  putStrLn "  1) Intro Escape"
+  putStrLn "  2) Library Secrets"
+  putStrLn "  3) Castle Treasure"
+  putStr "Enter choice (1/2/3): "
+  choice <- getLine
+  let filePath = case choice of
+        "1" -> "examples/intro-escape.txt"
+        "2" -> "examples/library-secrets.txt"
+        "3" -> "examples/castle-treasure.txt"
+  putStrLn $ "Loading: " ++ filePath
+  contents <- readFile filePath
+
   case parseGameFile contents of
     Left err -> print err
     Right gw -> do
