@@ -15,6 +15,7 @@ data Connection = Connection
   { connFrom  :: Name
   , connDir   :: String
   , connTo    :: Name
+  , connRequired :: Maybe Name
   } deriving (Show, Eq)
 
 -- Types of item behaviors

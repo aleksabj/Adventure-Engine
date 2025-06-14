@@ -35,9 +35,33 @@ gameWorldParser = do
       conns = [c | Right (Right (Left c)) <- blocks]
       starts = [s | Right (Right (Right (Left s))) <- blocks]
       goals = [g | Right (Right (Right (Right g))) <- blocks]
+      allConns = conns ++ generateReverseConnections conns
   case (starts, goals) of
-    ([s], [g]) -> return $ GameWorld locs conns items (GameConfig s (goalLocation g) (goalItems g))
+    ([s], [g]) -> return $ GameWorld locs allConns items (GameConfig s (goalLocation g) (goalItems g))
     _ -> fail "Missing or duplicate start/goal section"
+
+-- Reverse connections based on standard directions
+generateReverseConnections :: [Connection] -> [Connection]
+generateReverseConnections conns =
+  [ Connection (connTo c) revDir (connFrom c) (connRequired c)
+  | c <- conns
+  , Just revDir <- [oppositeDirection (connDir c)]
+  , not (any (\c' -> connFrom c' == connTo c && connDir c' == revDir && connTo c' == connFrom c) conns)
+  ]
+
+oppositeDirection :: String -> Maybe String
+oppositeDirection dir = lookup dir
+  [ ("north", "south")
+  , ("south", "north")
+  , ("east",  "west")
+  , ("west",  "east")
+  , ("up",    "down")
+  , ("down",  "up")
+  , ("inside","outside")
+  , ("outside","inside")
+  , ("forward", "back")
+  , ("back", "forward")
+  ]
 
 -- Unified block parser for all top-level DSL elements
 topLevelBlock :: Parser (Either Location (Either Item (Either Connection (Either Name GoalBlock))))
@@ -106,8 +130,19 @@ connectionParser = do
   dir <- spaces *> identifier
   _ <- spaces *> string "->"
   to <- spaces *> identifier
+  required <- optionMaybe parseCondition
   eol
-  return $ Connection from dir to
+  return $ Connection from dir to required
+
+parseCondition :: Parser Name
+parseCondition = try $ do
+  spaces
+  _ <- string "if"
+  spaces
+  _ <- string "has("
+  item <- identifier
+  _ <- char ')'
+  return item
 
 -- Parse the start location
 startParser :: Parser Name
