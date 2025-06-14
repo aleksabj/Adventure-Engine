@@ -1,38 +1,96 @@
 # Text Game Engine
 
-This project is a text adventure game engine written in Haskell. It allows defining a game world using a human-readable domain-specific language (DSL), and lets players explore that world via typed commands in the terminal.
+This project is a text adventure game engine written in Haskell. It allows defining a game world in a structured `.txt` file and play through it by typing commands in the terminal.
 
-The idea behind this engine is to support core features common in classic interactive fiction (like *Zork*), while focusing on functional design, clean state management, and simple extensibility.
+The goal was to practice functional programming and build a minimal, working base for classic interactive fiction (like *Zork*).
 
 ### Key Features
+- Parses a game world described in plain `.txt` files.
+- Keeps track of player location, inventory, and item states.
+- Lets the player interact with the world by typing commands like:
+  - `look`
+  - `go north`
+  - `take key`
+  - `open chest`
+  - `move rug`
+  - `read note`
+  - `help`
 
-- **Custom Game Description Format**  
-  Worlds are defined in a structured plain-text file, listing locations, items, connections, and rules. 
-
-- **Game State & Logic**  
-  The engine tracks player position, inventory, object states (e.g. open/closed), and environmental flags. All state is modeled using immutable data structures.
-
-- **Interactive Commands**  
-  Players can type commands like `go north`, `take lamp`, `open trapdoor`, `read leaflet`, etc. A simple parser interprets these and updates the game state accordingly.
-
-- **Game Mechanics Supported**
-  - Openable containers (e.g. mailbox, bottle, trapdoor)
-  - Nested items and inventory
-  - Movable objects that reveal hidden paths (e.g. rug revealing a trapdoor)
-
-- **Goal-Oriented Gameplay**
-  Games can specify an end condition (e.g. reach a location while carrying a specific item), allowing simple quests to be defined.
-
-### Project Goals
-
-The project aims to:
-- Explore functional programming techniques for stateful systems
-- Build a minimal text-based game framework
-- Separate world definition from logic using a DSL
-- Provide a base that could later be extended
-
-While the engine will not include rich storytelling or puzzles, it will support the technical foundations needed to build and play small interactive fiction games.
+- Supports simple game mechanics like:
+  - Containers that can be opened
+  - Movable items that reveal other items
+  - Locked paths that require an item to pass
+  - A goal condition to win
 
 ---
 
-> This is a work in progress. The plan is to iteratively build parsing, world modeling, command interpretation, and a simple gameplay loop.
+### Project structure
+
+- `app/Main.hs` — the entry point. It shows a menu to pick which `.txt` game to play.
+- `src/`
+  - `GameWorld.hs` — data types for locations, connections, items.
+  - `Parser.hs` — reads the `.txt` file and builds the game world.
+  - `Engine.hs` — handles player commands and game logic.
+  - `GameLoop.hs` — runs the game loop: prompts input, updates state, checks for goal.
+
+- `examples/` — example `.txt` game files:
+  - `intro-escape.txt`
+  - `library-secrets.txt`
+  - `castle-treasure.txt`
+
+---
+
+### How to set up
+
+1. Make sure you have:
+    - **GHC** installed
+    - **Cabal** installed
+
+    On Mac:
+    ```
+    brew install ghc cabal-install
+    ```
+    On Linux:
+    ```
+    sudo apt update 
+    sudo apt install ghc cabal-install
+    ```
+
+
+2. Build the project:
+    ```
+    cabal build
+    ```
+
+3. Run it:
+    ```
+    cabal run
+    ```
+
+4. Pick a game when the menu appears:
+    ```
+    Welcome to the Adventure Engine!
+    Please choose a game to play:
+      1) Intro Escape
+      2) Library Secrets
+      3) Castle Treasure
+    ```
+
+Just type `1` to play Intro Escape.
+
+### Example: how to win Intro Escape
+
+To finish Intro Escape, you can type this step by step:
+  ```
+  > open chest
+  > take key
+  > go north
+  > look
+  > move rug
+  > open trapdoor
+  > go down
+  ```
+
+This unlocks the hidden path and completes the goal.
+
+Use `look` and `inventory` anytime to see where you are or what you have.
