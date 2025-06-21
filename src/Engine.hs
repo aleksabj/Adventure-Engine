@@ -16,14 +16,28 @@ processCommand input state =
     let ws = cleanWords (words input)
     in case ws of
         ["look"]        -> (describeCurrentLocation state, state)
+        ["l"]           -> (describeCurrentLocation state, state)
         ["inventory"]   -> (showInventory state, state)
-        ["go", dir]     -> movePlayer dir state
+        ["i"]           -> (showInventory state, state)
+        ["go", dir]     -> movePlayer (dirToWord dir) state
+        [dir] | dir `elem` ["n","s","e","w","u","d","in","out"] -> movePlayer (dirToWord dir) state
         ["take", item]  -> takeItem item state
         ["open", item]  -> openItem item state
         ["read", item]  -> readItem item state
         ["move", item]  -> moveItem item state
         ["help"]        -> (helpMessage, state)
         _               -> ("I don't understand that command.", state)
+
+dirToWord :: String -> String
+dirToWord "n" = "north"
+dirToWord "s" = "south"
+dirToWord "e" = "east"
+dirToWord "w" = "west"
+dirToWord "u" = "up"
+dirToWord "d" = "down"
+dirToWord "in" = "inside"
+dirToWord "out" = "outside"
+dirToWord x   = x
 
 -- Describe the current location, items, and exits
 describeCurrentLocation :: GameState -> String
@@ -77,10 +91,12 @@ movePlayer dir gs =
     in case mConn of
         Just conn -> case connRequired conn of
             Nothing ->
-                ("You move " ++ dir ++ " to " ++ connTo conn ++ ".", gs { currentLoc = connTo conn })
+                let newState = gs { currentLoc = connTo conn }
+                in ("You move " ++ dir ++ " to " ++ connTo conn ++ ".\n" ++ describeCurrentLocation newState, newState)
             Just item
                 | item `elem` inventory gs ->
-                    ("You unlock the path with the " ++ item ++ " and go " ++ dir ++ " to " ++ connTo conn ++ ".", gs { currentLoc = connTo conn })
+                    let newState = gs { currentLoc = connTo conn }
+                    in ("You unlock the path with the " ++ item ++ " and go " ++ dir ++ " to " ++ connTo conn ++ ".\n" ++ describeCurrentLocation newState, newState)
                 | otherwise ->
                     ("You need a " ++ item ++ " to go " ++ dir ++ ".", gs)
         Nothing -> ("You can't go " ++ dir ++ " from here. Try: " ++ unwords available, gs)
@@ -124,12 +140,10 @@ openItem name gs =
 readItem :: Name -> GameState -> (String, GameState)
 readItem name gs =
     case findItem name (items (world gs)) of
-        Just it | Readable `elem` itemBehaviors it ->
-            ("You read the " ++ name ++ ". It's full of old, faded text.", gs)
-        Just _ ->
-            ("You can't read that.", gs)
-        Nothing ->
-            ("No such item.", gs)
+        Just it -> case [msg | Readable msg <- itemBehaviors it] of
+                    (msg:_) -> ("You read the " ++ name ++ ". You found there: " ++ msg, gs)
+                    _ -> ("You can't read that.", gs)
+        Nothing -> ("No such item.", gs)
 
 moveItem :: Name -> GameState -> (String, GameState)
 moveItem name gs =
@@ -201,4 +215,4 @@ helpMessage = unlines
     ]
 
 cleanWords :: [String] -> [String]
-cleanWords = filter (`notElem` ["the", "a", "an", "to", "on", "at", "in"])
+cleanWords = filter (`notElem` ["the", "a", "an", "to", "on", "at"])

@@ -21,7 +21,7 @@ data Connection = Connection
 -- Types of item behaviors
 data ItemBehavior
   = CanOpen { isOpen :: Bool, contains :: [Name] }
-  | Readable
+  | Readable String
   | Movable { reveals :: Maybe Name }
   | Hidden
   | LeadsTo Name

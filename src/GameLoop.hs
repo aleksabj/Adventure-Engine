@@ -2,7 +2,6 @@ module GameLoop (startGame) where
 
 import System.IO (hFlush, stdout)
 import Engine
-import GameWorld
 
 -- Starts the interactive game loop
 startGame :: GameState -> IO ()

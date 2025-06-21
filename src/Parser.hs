@@ -102,7 +102,7 @@ itemParser = do
 -- Parse a single item behavior line
 itemBehavior :: Parser ItemBehavior
 itemBehavior = try parseCanOpenBehavior
-           <|> try (indented "readable" >> return Readable)
+           <|> try (do msg <- indentedField "readable"; return (Readable msg))
            <|> try (indentedField "movable reveals" >>= \s -> return (Movable (Just s)))
            <|> try (indented "hidden" >> return Hidden)
            <|> try (indentedField "leads_to" >>= \s -> return (LeadsTo s))
