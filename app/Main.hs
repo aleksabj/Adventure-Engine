@@ -14,7 +14,7 @@ main = do
   putStrLn "  1) Intro Escape"
   putStrLn "  2) Library Secrets"
   putStrLn "  3) Castle Treasure"
-  putStr "Enter choice (1/2/3): "
+  putStrLn "Enter choice (1/2/3): "
   choice <- getLine
   let filePath = case choice of
         "1" -> "examples/intro-escape.txt"

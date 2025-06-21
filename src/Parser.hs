@@ -5,6 +5,14 @@ import Text.Parsec.String (Parser)
 import GameWorld
 import Control.Monad (void)
 
+data Block = 
+  PLoc Location
+  | PItem Item
+  | PConn Connection
+  | PStart Name
+  | PGoal GoalBlock
+  deriving (Show)
+
 -- Helper: parse an identifier (alphanumeric + '-' or '_')
 identifier :: Parser String
 identifier = many1 (alphaNum <|> oneOf "-_")
@@ -30,11 +38,11 @@ gameWorldParser :: Parser GameWorld
 gameWorldParser = do
   spaces
   blocks <- many (topLevelBlock <* many blankLine)
-  let locs  = [l | Left l <- blocks]
-      items = [i | Right (Left i) <- blocks]
-      conns = [c | Right (Right (Left c)) <- blocks]
-      starts = [s | Right (Right (Right (Left s))) <- blocks]
-      goals = [g | Right (Right (Right (Right g))) <- blocks]
+  let locs = [l | PLoc l   <- blocks]
+      items = [i | PItem i  <- blocks]
+      conns = [c | PConn c  <- blocks]
+      starts = [s | PStart s <- blocks]
+      goals = [g | PGoal g  <- blocks]
       allConns = conns ++ generateReverseConnections conns
   case (starts, goals) of
     ([s], [g]) -> return $ GameWorld locs allConns items (GameConfig s (goalLocation g) (goalItems g))
@@ -64,13 +72,13 @@ oppositeDirection dir = lookup dir
   ]
 
 -- Unified block parser for all top-level DSL elements
-topLevelBlock :: Parser (Either Location (Either Item (Either Connection (Either Name GoalBlock))))
+topLevelBlock :: Parser Block
 topLevelBlock =
-      (Left <$> locationParser)
-  <|> (Right . Left <$> itemParser)
-  <|> (Right . Right . Left <$> connectionParser)
-  <|> (Right . Right . Right . Left <$> startParser)
-  <|> (Right . Right . Right . Right <$> goalParser)
+      (PLoc <$> locationParser)
+  <|> (PItem <$> itemParser)
+  <|> (PConn <$> connectionParser)
+  <|> (PStart <$> startParser)
+  <|> (PGoal <$> goalParser)
 
 -- Parse a location block
 locationParser :: Parser Location
@@ -153,7 +161,7 @@ startParser = do
   return name
 
 -- Parse goal block with location + required items
-data GoalBlock = GoalBlock { goalLocation :: Name, goalItems :: [Name] }
+data GoalBlock = GoalBlock { goalLocation :: Name, goalItems :: [Name] } deriving Show
 
 goalParser :: Parser GoalBlock
 goalParser = do

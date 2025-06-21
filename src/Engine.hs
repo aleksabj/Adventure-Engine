@@ -2,7 +2,7 @@ module Engine where
 
 import GameWorld
 import Data.Maybe (fromMaybe)
-import Data.List (find, delete)
+import Data.List (find, delete, nub)
 
 data GameState = GameState
   { currentLoc :: Name
@@ -29,14 +29,36 @@ processCommand input state =
 describeCurrentLocation :: GameState -> String
 describeCurrentLocation gs =
     let loc = getLocationByName (currentLoc gs) (world gs)
-        itemStr = case locItems loc of
+        itemStr = case filter (itemVisible gs) (locItems loc) of
                     [] -> "There is nothing here."
                     xs -> "You see: " ++ unwords xs
-        available = [connDir c | c <- connections (world gs), connFrom c == locName loc]
+        available = filter (connectionVisible gs) ([ c | c <- connections (world gs), connFrom c == locName loc])
         dirStr = case available of
                     [] -> "There is nowhere to go from here."
-                    xs -> "Exits: " ++ unwords xs
+                    xs -> "Exits: " ++ unwords (map connDir xs)
     in locDescription loc ++ "\n" ++ itemStr ++ "\n" ++ dirStr
+
+-- only show a connection if there's no hidden item blocking it
+connectionVisible :: GameState -> Connection -> Bool
+connectionVisible gs conn =
+    let dest    = connTo conn
+        allItemss  = items (world gs)
+        mBlock  = find (\it -> any (isLeadTo dest) (itemBehaviors it)) allItemss
+    in maybe True (itemVisible gs . itemName) mBlock
+
+isLeadTo :: Name -> ItemBehavior -> Bool
+isLeadTo dest (LeadsTo name) = name == dest
+isLeadTo _ _ = False
+
+itemVisible :: GameState -> Name -> Bool
+itemVisible gs name =
+  case findItem name (items (world gs)) of
+    Just it -> Hidden `notElem` itemBehaviors it
+    Nothing -> True
+
+isHidden :: ItemBehavior -> Bool
+isHidden Hidden = True
+isHidden _      = False
 
 -- show the player's inventory
 showInventory :: GameState -> String
@@ -116,7 +138,10 @@ moveItem name gs =
         Just it -> case [r | Movable r <- itemBehaviors it] of
             (Just revealed : _) ->
                 let newLocs = revealItemInLocation revealed (currentLoc gs) (locations (world gs))
-                in ("You move the " ++ name ++ " and reveal: " ++ revealed ++ ".", gs { world = (world gs) { locations = newLocs } })
+                    updatedItems = case findItem revealed (items (world gs)) of
+                                Just rev -> updateItem (rev { itemBehaviors = filter (not . isHidden) (itemBehaviors rev) }) (items (world gs))
+                                Nothing  -> (items (world gs))
+                in ("You move the " ++ name ++ " and reveal: " ++ revealed ++ ".", gs { world = (world gs) { locations = newLocs, items = updatedItems } })
             _ -> ("You can't move that.", gs)
         Nothing -> ("No such item.", gs)
 
@@ -158,7 +183,7 @@ getLocationByName name gw =
 revealItemInLocation :: Name -> Name -> [Location] -> [Location]
 revealItemInLocation itemName targetName =
     map (\loc -> if locName loc == targetName
-                then loc { locItems = itemName : locItems loc }
+                then loc { locItems = nub (itemName : locItems loc) }
                 else loc)
 
 -- Help message for the player
