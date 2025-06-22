@@ -204,14 +204,15 @@ revealItemInLocation itemName targetName =
 helpMessage :: String
 helpMessage = unlines
     [ "Available commands:"
-    , "- look"
-    , "- inventory"
-    , "- go [direction]"
-    , "- take [item]"
-    , "- open [item]"
-    , "- read [item]"
-    , "- move [item]"
-    , "- help"
+    , "- look or l              : Observe your surroundings"
+    , "- inventory or i         : Check what you're carrying"
+    , "- go [direction]         : Move in a direction (or just type the first letter)"
+    , "                         (north/n, south/s, inside/in, outside/out)"
+    , "- take [item]            : Pick up an item"
+    , "- open [item]            : Open a door or container"
+    , "- read [item]            : Read a scroll, note, etc."
+    , "- move [item]            : Move or push an object"
+    , "- help                   : Show this help message"
     ]
 
 cleanWords :: [String] -> [String]
